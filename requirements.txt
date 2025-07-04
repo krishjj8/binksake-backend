@@ -5,3 +5,4 @@ pydantic
 supabase
 python-dotenv
 faker
+python-multipart
