@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Form
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import requests
@@ -45,11 +45,16 @@ def get_spotify_token():
     return response.json().get("access_token")
 
 @app.post("/submit-playlist")
-def submit_playlist(data: PlaylistSubmission):
-    if "open.spotify.com/playlist" not in data.playlist_url:
+def submit_playlist(username: str = Form(...), playlist_url: str = Form(...)):
+    print("📥 Received Submission:", username, playlist_url)
+
+    if "open.spotify.com/playlist" not in playlist_url:
         raise HTTPException(status_code=400, detail="Invalid Spotify URL")
 
-    playlist_id = data.playlist_url.split("/")[-1].split("?")[0]
+    # Extract ID
+    playlist_id = playlist_url.split("/")[-1].split("?")[0]
+
+    # Get Spotify token
     token = get_spotify_token()
     headers = {"Authorization": f"Bearer {token}"}
     url = f"https://api.spotify.com/v1/playlists/{playlist_id}"
@@ -63,22 +68,26 @@ def submit_playlist(data: PlaylistSubmission):
     total_tracks = playlist_data["tracks"]["total"]
     image_url = playlist_data["images"][0]["url"] if playlist_data.get("images") else ""
 
-    # Prepare data
+    # Prepare insert
     insert_data = {
-        "username": data.username,
-        "playlist_url": data.playlist_url,
+        "username": username,
+        "playlist_url": playlist_url,
         "playlist_name": playlist_name,
         "image": image_url,
         "tracks": total_tracks
     }
 
-    print("🟢 Data to insert:", insert_data)
+    print("🟢 Inserting into Supabase:", insert_data)
 
-    # Insert into Supabase
-    result = supabase.table("binksake").insert(insert_data).execute()
+    try:
+        result = supabase.table("binksake").insert(insert_data).execute()
+        print("✅ Supabase insert result:", result.data)
+    except Exception as e:
+        print("❌ Supabase error:", e)
+        raise HTTPException(status_code=500, detail="Supabase insert failed")
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to insert into Supabase")
+        raise HTTPException(status_code=500, detail="Insert returned no data")
 
     return {
         "message": "Playlist stored successfully",
