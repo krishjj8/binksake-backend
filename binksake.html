@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Binksake - Let's sail in this music world</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(145deg, #0f0c29, #302b63, #24243e);
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+<body class="text-white">
+
+  <!-- Header -->
+  <header class="flex justify-between items-center px-8 py-5">
+    <div class="flex items-center space-x-3">
+      <img src="logo.png" alt="Binksake Logo" class="h-12 w-12">
+      <h1 class="text-3xl font-bold">Binksake</h1>
+    </div>
+    <nav class="space-x-6">
+      <a href="#submit" class="hover:underline">Submit Playlist</a>
+      <a href="#leaderboard" class="hover:underline">Leaderboard</a>
+      <a href="#blog" class="hover:underline">Blog</a>
+      <a href="#forum" class="hover:underline">Forum</a>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="text-center py-20">
+    <h2 class="text-4xl font-bold mb-4">Let’s sail in this music world</h2>
+    <p class="text-gray-300">Discover. Share. Vibe. Together.</p>
+  </section>
+
+  <!-- Playlist Submission -->
+  <section id="submit" class="px-6 py-16 glass rounded-xl max-w-3xl mx-auto">
+    <h3 class="text-2xl font-semibold mb-6 text-center">🚀 Submit Your Playlist</h3>
+    <form id="playlistForm" class="space-y-6">
+      <input type="text" name="username" placeholder="Your Name" required class="w-full p-3 rounded bg-gray-800 border border-gray-600 text-white" />
+      <input type="url" name="playlist_url" placeholder="Spotify Playlist URL" required class="w-full p-3 rounded bg-gray-800 border border-gray-600 text-white" />
+      <button type="submit" class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded font-semibold">Submit</button>
+    </form>
+    <p id="submitResponse" class="mt-4 text-sm text-green-400 hidden">✅ Submitted!</p>
+  </section>
+
+  <!-- Leaderboard -->
+  <section id="leaderboard" class="px-6 py-16 max-w-4xl mx-auto">
+    <h3 class="text-2xl font-semibold mb-6 text-center">🏆 Leaderboard</h3>
+    <ul id="leaderboardList" class="space-y-3 text-center"></ul>
+  </section>
+
+  <!-- Blog Section -->
+  <section id="blog" class="px-6 py-16 max-w-4xl mx-auto glass rounded-xl">
+    <h3 class="text-2xl font-semibold mb-6 text-center">📝 Music Blog</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-gray-800 p-4 rounded">
+        <h4 class="text-xl font-bold mb-2">Top Playlists This Week</h4>
+        <p class="text-gray-300">Dive into the most loved vibes across Binksake users.</p>
+      </div>
+      <div class="bg-gray-800 p-4 rounded">
+        <h4 class="text-xl font-bold mb-2">How Music Affects Mood</h4>
+        <p class="text-gray-300">Explore the science behind music and emotions.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Forum Section -->
+  <section id="forum" class="px-6 py-16 max-w-4xl mx-auto">
+    <h3 class="text-2xl font-semibold mb-6 text-center">💬 Reddit Forum</h3>
+    <p class="text-center text-gray-300">
+      Join the discussion on our <a href="https://reddit.com/r/binksake" target="_blank" class="underline text-purple-400">Reddit community</a> and share your musical journey!
+    </p>
+  </section>
+
+  <!-- Footer -->
+  <footer class="text-center text-gray-500 py-10 text-sm">
+    © 2025 Binksake. All rights reserved.
+  </footer>
+
+  <script>
+    // Playlist form submission
+    document.getElementById('playlistForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = e.target.username.value;
+      const playlist_url = e.target.playlist_url.value;
+
+      try {
+        const res = await fetch("http://127.0.0.1:8000/submit-playlist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, playlist_url })
+        });
+
+        if (!res.ok) throw new Error("Failed");
+        document.getElementById('submitResponse').classList.remove('hidden');
+        e.target.reset();
+      } catch (err) {
+        alert("❌ Could not submit playlist.");
+      }
+    });
+
+    // Fetch leaderboard
+    async function loadLeaderboard() {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/leaderboard");
+        const data = await res.json();
+        const list = document.getElementById("leaderboardList");
+        list.innerHTML = "";
+        data.leaderboard.forEach(([user, count]) => {
+          const item = document.createElement("li");
+          item.textContent = `${user} - ${count} playlists`;
+          list.appendChild(item);
+        });
+      } catch {
+        document.getElementById("leaderboardList").innerHTML = "<li>⚠️ Unable to load leaderboard</li>";
+      }
+    }
+    loadLeaderboard();
+  </script>
+</body>
+</html>
