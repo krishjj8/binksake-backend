@@ -93,6 +93,7 @@ def submit_playlist(data: PlaylistSubmission):
     }
 
     print("🟢 Inserting into Supabase:", insert_data)
+
     try:
         result = supabase.table("binksake").insert(insert_data).execute()
         print("✅ Supabase insert result:", result.data)
@@ -103,7 +104,13 @@ def submit_playlist(data: PlaylistSubmission):
     if not result.data:
         raise HTTPException(status_code=500, detail="Insert returned no data")
 
-    return {"message": "Playlist stored successfully", "playlist": result.data[0]}
+    return {
+        "message": "Playlist stored successfully",
+        "playlist": result.data[0]
+    }
+@app.get("/")
+def read_root():
+    return {"message": "Binksake API is up and running 🚀"}
 
 @app.get("/leaderboard")
 def get_leaderboard():
